@@ -17,7 +17,8 @@ import {
   Upload,
   Activity,
   UserCheck,
-  TrendingUp
+  TrendingUp,
+  Plus
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,7 +42,7 @@ interface HealthEvent {
 
 interface AttendanceRecord {
   date: string;
-  status: 'present' | 'absent' | 'late' | 'half-day'|'extra-day';
+  status: 'present' | 'absent' | 'late' | 'half-day' | 'extra-day';
   checkIn?: string;
   checkOut?: string;
 }
@@ -95,15 +96,17 @@ const WorkerDashboard = () => {
         { date: "2024-02-13", status: 'late' as const, checkIn: "08:30 AM", checkOut: "05:00 PM" },
         { date: "2024-02-12", status: 'present' as const, checkIn: "08:00 AM", checkOut: "05:00 PM" },
         { date: "2024-02-11", status: 'half-day' as const, checkIn: "08:00 AM", checkOut: "01:00 PM" },
+        { date: "2024-02-10", status: 'extra-day' as const, checkIn: "08:00 AM", checkOut: "05:00 PM" },
+        { date: "2024-02-09", status: 'extra-day' as const, checkIn: "07:00 AM", checkOut: "06:00 PM" },
       ]
     },
     weekly: {
-      currentWeek: { present: 4, absent: 0, late: 1, halfDays: 1,extraDays:2 },
-      lastWeek: { present: 5, absent: 0, late: 0, halfDays: 0 },
+      currentWeek: { present: 4, absent: 0, late: 1, halfDays: 1, extraDays: 2 },
+      lastWeek: { present: 5, absent: 0, late: 0, halfDays: 0, extraDays: 1 },
     },
     monthly: {
-      currentMonth: { present: 18, absent: 1, late: 2, halfDays: 2, extraDays:2, totalDays: 23 },
-      lastMonth: { present: 20, absent: 1, late: 1, halfDays: 0, totalDays: 22 },
+      currentMonth: { present: 18, absent: 1, late: 2, halfDays: 2, extraDays: 4, totalDays: 23 },
+      lastMonth: { present: 20, absent: 1, late: 1, halfDays: 0, extraDays: 2, totalDays: 22 },
     }
   });
 
@@ -153,7 +156,7 @@ const WorkerDashboard = () => {
       case 'absent': return 'bg-destructive text-destructive-foreground';
       case 'late': return 'bg-warning text-warning-foreground';
       case 'half-day': return 'bg-accent text-accent-foreground';
-      case 'extra-day': return 'bg-accent text-accent-foreground';  
+      case 'extra-day': return 'bg-blue-500 text-white';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -241,7 +244,7 @@ const WorkerDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                 <div className="p-4 border rounded-lg text-center">
                   <CheckCircle2 className="w-8 h-8 text-success mx-auto mb-2" />
                   <p className="text-2xl font-bold text-success">{attendanceData.weekly.currentWeek.present}</p>
@@ -258,6 +261,11 @@ const WorkerDashboard = () => {
                   <p className="text-sm text-muted-foreground">Half Days</p>
                 </div>
                 <div className="p-4 border rounded-lg text-center">
+                  <Plus className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-blue-500">{attendanceData.weekly.currentWeek.extraDays}</p>
+                  <p className="text-sm text-muted-foreground">Extra Days</p>
+                </div>
+                <div className="p-4 border rounded-lg text-center">
                   <XCircle className="w-8 h-8 text-destructive mx-auto mb-2" />
                   <p className="text-2xl font-bold text-destructive">{attendanceData.weekly.currentWeek.absent}</p>
                   <p className="text-sm text-muted-foreground">Absent</p>
@@ -270,9 +278,14 @@ const WorkerDashboard = () => {
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       <Badge className={getAttendanceStatusColor(day.status)}>
-                        {day.status}
+                        {day.status === 'extra-day' ? 'Extra Day' : day.status}
                       </Badge>
                       <span className="font-medium">{day.date}</span>
+                      {day.status === 'extra-day' && (
+                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          Overtime/Weekend
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {day.checkIn} - {day.checkOut}
@@ -304,6 +317,10 @@ const WorkerDashboard = () => {
                       <span className="text-sm">Present Days</span>
                       <span className="font-bold text-success">{attendanceData.monthly.currentMonth.present}</span>
                     </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg bg-blue-50">
+                      <span className="text-sm">Extra Days Worked</span>
+                      <span className="font-bold text-blue-600">{attendanceData.monthly.currentMonth.extraDays}</span>
+                    </div>
                     <div className="flex justify-between items-center p-3 border rounded-lg bg-destructive/10">
                       <span className="text-sm">Absent Days</span>
                       <span className="font-bold text-destructive">{attendanceData.monthly.currentMonth.absent}</span>
@@ -312,6 +329,10 @@ const WorkerDashboard = () => {
                       <span className="text-sm">Late Days</span>
                       <span className="font-bold text-warning">{attendanceData.monthly.currentMonth.late}</span>
                     </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg bg-accent/10">
+                      <span className="text-sm">Half Days</span>
+                      <span className="font-bold text-accent">{attendanceData.monthly.currentMonth.halfDays}</span>
+                    </div>
                   </div>
                   <div className="mt-4 p-4 bg-primary/10 rounded-lg">
                     <p className="text-sm text-muted-foreground">Attendance Rate</p>
@@ -319,6 +340,15 @@ const WorkerDashboard = () => {
                       {Math.round((attendanceData.monthly.currentMonth.present / attendanceData.monthly.currentMonth.totalDays) * 100)}%
                     </p>
                   </div>
+                  {attendanceData.monthly.currentMonth.extraDays > 0 && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Extra Hours Worked</p>
+                      <p className="text-lg font-bold text-blue-600">
+                        {attendanceData.monthly.currentMonth.extraDays} Days
+                      </p>
+                      <p className="text-xs text-blue-500">Eligible for overtime compensation</p>
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -333,12 +363,20 @@ const WorkerDashboard = () => {
                       <span className="font-bold">{attendanceData.monthly.lastMonth.present}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 border rounded-lg">
+                      <span className="text-sm">Extra Days Worked</span>
+                      <span className="font-bold text-blue-600">{attendanceData.monthly.lastMonth.extraDays}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg">
                       <span className="text-sm">Absent Days</span>
                       <span className="font-bold">{attendanceData.monthly.lastMonth.absent}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 border rounded-lg">
                       <span className="text-sm">Late Days</span>
                       <span className="font-bold">{attendanceData.monthly.lastMonth.late}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg">
+                      <span className="text-sm">Half Days</span>
+                      <span className="font-bold">{attendanceData.monthly.lastMonth.halfDays}</span>
                     </div>
                   </div>
                   <div className="mt-4 p-4 bg-muted rounded-lg">
