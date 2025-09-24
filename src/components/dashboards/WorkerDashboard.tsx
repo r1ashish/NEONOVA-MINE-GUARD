@@ -153,6 +153,7 @@ const WorkerDashboard = () => {
       case 'absent': return 'bg-destructive text-destructive-foreground';
       case 'late': return 'bg-warning text-warning-foreground';
       case 'half-day': return 'bg-accent text-accent-foreground';
+      case 'extra-day': return 'bg-accent text-accent-foreground';  
       default: return 'bg-muted text-muted-foreground';
     }
   };
