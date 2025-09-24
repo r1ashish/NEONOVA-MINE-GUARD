@@ -41,7 +41,7 @@ interface HealthEvent {
 
 interface AttendanceRecord {
   date: string;
-  status: 'present' | 'absent' | 'late' | 'half-day';
+  status: 'present' | 'absent' | 'late' | 'half-day'|'extra-day';
   checkIn?: string;
   checkOut?: string;
 }
@@ -50,11 +50,11 @@ const WorkerDashboard = () => {
   // Employee Profile Data
   const [employeeProfile] = useState({
     userId: "EMP-2024-001",
-    name: "John Smith",
+    name: "Mohan kumar",
     department: "Mining Operations",
     jobTitle: "Senior Miner",
-    email: "john.smith@neonova.com",
-    phone: "+1 (555) 123-4567",
+    email: "mohan.kumar@neonova.com",
+    phone: "+91 (555) 123-4567",
     profilePicture: "/api/placeholder/150/150"
   });
 
@@ -98,11 +98,11 @@ const WorkerDashboard = () => {
       ]
     },
     weekly: {
-      currentWeek: { present: 4, absent: 0, late: 1, halfDays: 1 },
+      currentWeek: { present: 4, absent: 0, late: 1, halfDays: 1,extraDays:2 },
       lastWeek: { present: 5, absent: 0, late: 0, halfDays: 0 },
     },
     monthly: {
-      currentMonth: { present: 18, absent: 1, late: 2, halfDays: 2, totalDays: 23 },
+      currentMonth: { present: 18, absent: 1, late: 2, halfDays: 2, extraDays:2, totalDays: 23 },
       lastMonth: { present: 20, absent: 1, late: 1, halfDays: 0, totalDays: 22 },
     }
   });
