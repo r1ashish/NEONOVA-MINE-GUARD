@@ -4,275 +4,317 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
 import { 
-  CheckCircle2, 
-  Circle, 
-  AlertTriangle, 
-  Upload, 
-  Phone, 
+  User, 
+  Calendar as CalendarIcon, 
+  Heart, 
+  FileText,
   Clock,
-  HardHat,
-  Wrench
+  CheckCircle2,
+  XCircle,
+  Upload,
+  Activity
 } from "lucide-react";
 import { toast } from "sonner";
 
-interface Task {
+interface LeaveRequest {
   id: number;
-  title: string;
-  status: 'pending' | 'done';
-  priority: 'low' | 'medium' | 'high';
-}
-
-interface HazardReport {
-  id: number;
-  description: string;
-  location: string;
-  status: 'pending' | 'done' | 'rejected';
+  type: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
   timestamp: string;
 }
 
+interface HealthEvent {
+  id: number;
+  title: string;
+  date: string;
+  type: 'checkup' | 'wellness' | 'vaccination' | 'training';
+  description: string;
+}
+
 const WorkerDashboard = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, title: "Complete daily safety check", status: 'pending', priority: 'high' },
-    { id: 2, title: "Inspect tunnel ventilation system", status: 'pending', priority: 'medium' },
-    { id: 3, title: "Report equipment maintenance needs", status: 'done', priority: 'low' },
-    { id: 4, title: "Attend safety briefing", status: 'pending', priority: 'high' },
+  // Employee Profile Data
+  const [employeeProfile] = useState({
+    userId: "EMP-2024-001",
+    name: "John Smith",
+    department: "Mining Operations",
+    jobTitle: "Senior Miner",
+    email: "john.smith@neonova.com",
+    phone: "+1 (555) 123-4567",
+    profilePicture: "/api/placeholder/150/150"
+  });
+
+  // Leave Management
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([
+    { id: 1, type: "Vacation", startDate: "2024-02-15", endDate: "2024-02-17", reason: "Family trip", status: 'approved', timestamp: "2024-01-10 09:30" },
+    { id: 2, type: "Sick Leave", startDate: "2024-01-20", endDate: "2024-01-20", reason: "Medical appointment", status: 'pending', timestamp: "2024-01-18 14:20" },
   ]);
 
-  const [hazardReports, setHazardReports] = useState<HazardReport[]>([
-    { id: 1, description: "Loose rocks in tunnel B-7", location: "Tunnel B-7, Section 3", status: 'done', timestamp: "2024-01-15 09:30" },
-    { id: 2, description: "Gas leak detected", location: "Shaft A-2", status: 'pending', timestamp: "2024-01-14 14:20" },
+  const [newLeaveRequest, setNewLeaveRequest] = useState({
+    type: '',
+    startDate: '',
+    endDate: '',
+    reason: ''
+  });
+
+  // Health Information
+  const [healthInfo] = useState({
+    lastCheckup: "2024-01-05",
+    nextCheckup: "2024-04-05",
+    wellnessScore: 85,
+    vaccinations: "Up to date"
+  });
+
+  const [healthEvents, setHealthEvents] = useState<HealthEvent[]>([
+    { id: 1, title: "Annual Health Checkup", date: "2024-04-05", type: 'checkup', description: "Mandatory annual health screening" },
+    { id: 2, title: "Wellness Workshop", date: "2024-02-20", type: 'wellness', description: "Stress management and mental health" },
+    { id: 3, title: "Safety Training", date: "2024-02-10", type: 'training', description: "Updated mining safety protocols" },
   ]);
 
-  const [newHazard, setNewHazard] = useState({ description: '', location: '' });
-  const [attendanceMarked, setAttendanceMarked] = useState(false);
-
-  const toggleTask = (taskId: number) => {
-    setTasks(tasks.map(task => {
-      if (task.id === taskId) {
-        const newStatus = task.status === 'pending' ? 'done' : 'pending';
-        toast.success(`Task ${newStatus === 'done' ? 'completed' : 'reopened'}`);
-        return { ...task, status: newStatus };
-      }
-      return task;
-    }));
-  };
-
-  const submitHazardReport = () => {
-    if (!newHazard.description.trim() || !newHazard.location.trim()) {
+  const submitLeaveRequest = () => {
+    if (!newLeaveRequest.type || !newLeaveRequest.startDate || !newLeaveRequest.endDate || !newLeaveRequest.reason.trim()) {
       toast.error("Please fill in all fields");
       return;
     }
 
-    const report: HazardReport = {
+    const request: LeaveRequest = {
       id: Date.now(),
-      description: newHazard.description,
-      location: newHazard.location,
+      type: newLeaveRequest.type,
+      startDate: newLeaveRequest.startDate,
+      endDate: newLeaveRequest.endDate,
+      reason: newLeaveRequest.reason,
       status: 'pending',
       timestamp: new Date().toLocaleString(),
     };
 
-    setHazardReports([report, ...hazardReports]);
-    setNewHazard({ description: '', location: '' });
-    toast.success("Hazard report submitted successfully");
-  };
-
-  const handleEmergencySOS = () => {
-    toast.error("🚨 EMERGENCY ALERT SENT! Supervisor notified immediately!", {
-      duration: 5000,
-    });
-  };
-
-  const markAttendance = () => {
-    setAttendanceMarked(true);
-    toast.success("Attendance marked for today");
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-destructive';
-      case 'medium': return 'bg-warning';
-      case 'low': return 'bg-success';
-      default: return 'bg-muted';
-    }
+    setLeaveRequests([request, ...leaveRequests]);
+    setNewLeaveRequest({ type: '', startDate: '', endDate: '', reason: '' });
+    toast.success("Leave request submitted successfully");
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'done': return 'bg-success';
-      case 'rejected': return 'bg-destructive';
-      case 'pending': return 'bg-warning';
-      default: return 'bg-muted';
+      case 'approved': return 'bg-success text-success-foreground';
+      case 'rejected': return 'bg-destructive text-destructive-foreground';
+      case 'pending': return 'bg-warning text-warning-foreground';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getHealthEventColor = (type: string) => {
+    switch (type) {
+      case 'checkup': return 'bg-primary text-primary-foreground';
+      case 'wellness': return 'bg-success text-success-foreground';
+      case 'vaccination': return 'bg-warning text-warning-foreground';
+      case 'training': return 'bg-accent text-accent-foreground';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Tasks Section */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <CheckCircle2 className="w-5 h-5 text-primary" />
-              <span>My Tasks</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-200 hover:shadow-lg ${
-                    task.status === 'done' ? 'bg-success/10 border-success' : 'bg-card border-border'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleTask(task.id)}
-                      className="p-0 h-6 w-6"
-                    >
-                      {task.status === 'done' ? (
-                        <CheckCircle2 className="w-5 h-5 text-success" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-muted-foreground" />
-                      )}
-                    </Button>
-                    <span className={task.status === 'done' ? 'line-through text-muted-foreground' : ''}>
-                      {task.title}
-                    </span>
-                  </div>
-                  <Badge className={`${getPriorityColor(task.priority)} text-white`}>
-                    {task.priority}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Attendance & Equipment */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-primary" />
-              <span>Daily Check-in</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button
-              onClick={markAttendance}
-              disabled={attendanceMarked}
-              className={`w-full ${attendanceMarked ? 'bg-success hover:bg-success' : ''}`}
-            >
-              <HardHat className="w-4 h-4 mr-2" />
-              {attendanceMarked ? 'Attendance Marked ✓' : 'Mark Attendance'}
-            </Button>
-            
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Equipment Status</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Safety Helmet</span>
-                  <Badge className="bg-success text-success-foreground">OK</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>Gas Detector</span>
-                  <Badge className="bg-success text-success-foreground">OK</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>Communication Radio</span>
-                  <Badge className="bg-warning text-warning-foreground">Check</Badge>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Hazard Reporting */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
-              <span>Report Hazard</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              placeholder="Hazard location (e.g., Tunnel B-7, Section 3)"
-              value={newHazard.location}
-              onChange={(e) => setNewHazard({...newHazard, location: e.target.value})}
-            />
-            <Textarea
-              placeholder="Describe the hazard in detail..."
-              value={newHazard.description}
-              onChange={(e) => setNewHazard({...newHazard, description: e.target.value})}
-              rows={3}
-            />
-            <div className="flex space-x-2">
-              <Button onClick={submitHazardReport} className="flex-1">
-                Submit Report
-              </Button>
-              <Button variant="outline" size="icon">
-                <Upload className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Emergency SOS */}
-        <Card className="border-destructive/20">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-destructive">
-              <Phone className="w-5 h-5" />
-              <span>Emergency Response</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={handleEmergencySOS}
-              className="w-full h-16 text-xl font-bold bg-gradient-danger hover:opacity-90 emergency-pulse"
-            >
-              <Phone className="w-6 h-6 mr-3" />
-              EMERGENCY SOS
-            </Button>
-            <p className="text-sm text-muted-foreground mt-3 text-center">
-              Use only in case of immediate danger
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Report Status */}
+      {/* Profile Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Wrench className="w-5 h-5 text-primary" />
-            <span>My Reports Status</span>
+            <User className="w-5 h-5 text-primary" />
+            <span>My Profile</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {hazardReports.map((report) => (
-              <div key={report.id} className="flex items-start justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <p className="font-medium">{report.description}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{report.location}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{report.timestamp}</p>
+          <div className="flex items-center space-x-6">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-2xl font-bold text-primary-foreground">
+              {employeeProfile.name.split(' ').map(n => n[0]).join('')}
+            </div>
+            <div className="flex-1 space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Employee ID</p>
+                  <p className="font-semibold">{employeeProfile.userId}</p>
                 </div>
-                <Badge className={`${getStatusColor(report.status)} text-white ml-4`}>
-                  {report.status}
-                </Badge>
+                <div>
+                  <p className="text-sm text-muted-foreground">Full Name</p>
+                  <p className="font-semibold">{employeeProfile.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Department</p>
+                  <p className="font-semibold">{employeeProfile.department}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Job Title</p>
+                  <p className="font-semibold">{employeeProfile.jobTitle}</p>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      <Tabs defaultValue="leave" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="leave">Leave Management</TabsTrigger>
+          <TabsTrigger value="health">Health & Wellness</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="leave" className="space-y-6">
+          {/* Request Leave Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <CalendarIcon className="w-5 h-5 text-primary" />
+                <span>Request Leave</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Leave Type</label>
+                  <select
+                    className="w-full p-2 border rounded-lg bg-background"
+                    value={newLeaveRequest.type}
+                    onChange={(e) => setNewLeaveRequest({...newLeaveRequest, type: e.target.value})}
+                  >
+                    <option value="">Select leave type</option>
+                    <option value="Vacation">Vacation</option>
+                    <option value="Sick Leave">Sick Leave</option>
+                    <option value="Personal Time">Personal Time</option>
+                    <option value="Emergency">Emergency Leave</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Start Date</label>
+                  <Input
+                    type="date"
+                    value={newLeaveRequest.startDate}
+                    onChange={(e) => setNewLeaveRequest({...newLeaveRequest, startDate: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">End Date</label>
+                  <Input
+                    type="date"
+                    value={newLeaveRequest.endDate}
+                    onChange={(e) => setNewLeaveRequest({...newLeaveRequest, endDate: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Reason</label>
+                <Textarea
+                  placeholder="Please provide a reason for your leave request..."
+                  value={newLeaveRequest.reason}
+                  onChange={(e) => setNewLeaveRequest({...newLeaveRequest, reason: e.target.value})}
+                  rows={3}
+                />
+              </div>
+              <Button onClick={submitLeaveRequest} className="w-full">
+                <FileText className="w-4 h-4 mr-2" />
+                Submit Leave Request
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Leave History */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Clock className="w-5 h-5 text-primary" />
+                <span>Leave History</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {leaveRequests.map((request) => (
+                  <div key={request.id} className="flex items-start justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <p className="font-medium">{request.type}</p>
+                        <Badge className={getStatusColor(request.status)}>
+                          {request.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {request.startDate} to {request.endDate}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{request.reason}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Requested: {request.timestamp}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="health" className="space-y-6">
+          {/* Health Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Heart className="w-5 h-5 text-primary" />
+                <span>Health Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 border rounded-lg text-center">
+                  <Activity className="w-8 h-8 text-success mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Wellness Score</p>
+                  <p className="text-2xl font-bold text-success">{healthInfo.wellnessScore}%</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <p className="text-sm text-muted-foreground">Last Checkup</p>
+                  <p className="font-semibold">{healthInfo.lastCheckup}</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <p className="text-sm text-muted-foreground">Next Checkup</p>
+                  <p className="font-semibold">{healthInfo.nextCheckup}</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <p className="text-sm text-muted-foreground">Vaccinations</p>
+                  <p className="font-semibold text-success">{healthInfo.vaccinations}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Health Events */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <CalendarIcon className="w-5 h-5 text-primary" />
+                <span>Upcoming Health Events</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {healthEvents.map((event) => (
+                  <div key={event.id} className="flex items-start justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <p className="font-medium">{event.title}</p>
+                        <Badge className={getHealthEventColor(event.type)}>
+                          {event.type}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{event.description}</p>
+                      <div className="flex items-center space-x-1 mt-1">
+                        <CalendarIcon className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">{event.date}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

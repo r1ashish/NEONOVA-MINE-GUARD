@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,9 @@ import {
   Clock,
   AlertTriangle,
   Wifi,
-  WifiOff
+  WifiOff,
+  Phone,
+  Shield
 } from "lucide-react";
 import MineMap from "../MineMap";
 import { toast } from "sonner";
@@ -45,6 +47,16 @@ interface Resource {
   team: string;
 }
 
+interface EmergencyAlert {
+  id: number;
+  workerId: number;
+  workerName: string;
+  location: string;
+  timestamp: string;
+  status: 'active' | 'responding' | 'resolved';
+  responseTime?: string;
+}
+
 const SupervisorDashboard = () => {
   const [workers, setWorkers] = useState<Worker[]>([
     { id: 1, name: "John Smith", status: 'active', location: "Tunnel A-5", attendance: true, lastSeen: "5 min ago" },
@@ -66,6 +78,33 @@ const SupervisorDashboard = () => {
     { id: 3, name: "Emergency Oxygen", quantity: 1, unit: "tanks", status: 'critical', team: "Team C" },
     { id: 4, name: "Communication Radios", quantity: 15, unit: "units", status: 'adequate', team: "All Teams" },
   ]);
+
+  const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([
+    { id: 1, workerId: 5, workerName: "Mike Wilson", location: "Tunnel B-7", timestamp: "2024-01-15 14:30", status: 'active' },
+  ]);
+
+  // Emergency SOS simulation - in real app this would come from worker devices
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Simulate random emergency alerts for demonstration
+      if (Math.random() < 0.01) { // 1% chance every 5 seconds
+        const mockAlert: EmergencyAlert = {
+          id: Date.now(),
+          workerId: Math.floor(Math.random() * 5) + 1,
+          workerName: `Worker ${Math.floor(Math.random() * 5) + 1}`,
+          location: `Tunnel ${String.fromCharCode(65 + Math.floor(Math.random() * 3))}-${Math.floor(Math.random() * 10) + 1}`,
+          timestamp: new Date().toLocaleString(),
+          status: 'active'
+        };
+        setEmergencyAlerts(prev => [mockAlert, ...prev.slice(0, 4)]); // Keep only 5 most recent
+        toast.error(`🚨 EMERGENCY ALERT: ${mockAlert.workerName} at ${mockAlert.location}`, {
+          duration: 10000,
+        });
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleAttendance = (workerId: number) => {
     setWorkers(workers.map(worker => 
@@ -108,13 +147,74 @@ const SupervisorDashboard = () => {
     }
   };
 
+  const handleEmergencyResponse = (alertId: number) => {
+    setEmergencyAlerts(alerts => alerts.map(alert => 
+      alert.id === alertId 
+        ? { ...alert, status: 'responding', responseTime: new Date().toLocaleString() }
+        : alert
+    ));
+    toast.success("Emergency response team dispatched");
+  };
+
+  const resolveEmergency = (alertId: number) => {
+    setEmergencyAlerts(alerts => alerts.map(alert => 
+      alert.id === alertId 
+        ? { ...alert, status: 'resolved' }
+        : alert
+    ));
+    toast.success("Emergency resolved");
+  };
+
+  const getEmergencyStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-destructive text-destructive-foreground emergency-pulse';
+      case 'responding': return 'bg-warning text-warning-foreground';
+      case 'resolved': return 'bg-success text-success-foreground';
+      default: return 'bg-muted';
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Emergency Alerts Banner */}
+      {emergencyAlerts.filter(alert => alert.status === 'active').length > 0 && (
+        <Card className="border-destructive bg-destructive/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center space-x-2 text-destructive">
+              <Shield className="w-5 h-5 animate-pulse" />
+              <span>🚨 ACTIVE EMERGENCY ALERTS</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {emergencyAlerts.filter(alert => alert.status === 'active').map((alert) => (
+                <div key={alert.id} className="flex items-center justify-between p-3 bg-card border border-destructive rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-5 h-5 text-destructive animate-pulse" />
+                    <div>
+                      <p className="font-semibold text-destructive">{alert.workerName}</p>
+                      <p className="text-sm text-muted-foreground">{alert.location} • {alert.timestamp}</p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => handleEmergencyResponse(alert.id)}
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    Respond Now
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Tabs defaultValue="workers" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="workers">Workers</TabsTrigger>
           <TabsTrigger value="tasks">Task Log</TabsTrigger>
           <TabsTrigger value="resources">Resources</TabsTrigger>
+          <TabsTrigger value="emergency">Emergency SOS</TabsTrigger>
           <TabsTrigger value="map">Mine Map</TabsTrigger>
         </TabsList>
 
@@ -243,6 +343,77 @@ const SupervisorDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="emergency" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Phone className="w-5 h-5 text-destructive" />
+                <span>Emergency SOS Management</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {emergencyAlerts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No emergency alerts at this time</p>
+                  </div>
+                ) : (
+                  emergencyAlerts.map((alert) => (
+                    <div key={alert.id} className="flex items-start justify-between p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <p className="font-semibold">{alert.workerName}</p>
+                          <Badge className={getEmergencyStatusColor(alert.status)}>
+                            {alert.status.toUpperCase()}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <div className="flex items-center space-x-1">
+                            <MapPin className="w-3 h-3" />
+                            <span>Location: {alert.location}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-3 h-3" />
+                            <span>Alert Time: {alert.timestamp}</span>
+                          </div>
+                          {alert.responseTime && (
+                            <div className="flex items-center space-x-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Response Time: {alert.responseTime}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2 ml-4">
+                        {alert.status === 'active' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleEmergencyResponse(alert.id)}
+                            className="bg-warning hover:bg-warning/80"
+                          >
+                            Respond
+                          </Button>
+                        )}
+                        {alert.status === 'responding' && (
+                          <Button
+                            size="sm"
+                            onClick={() => resolveEmergency(alert.id)}
+                            className="bg-success hover:bg-success/80"
+                          >
+                            Resolve
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
