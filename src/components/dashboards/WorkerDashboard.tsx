@@ -15,7 +15,9 @@ import {
   CheckCircle2,
   XCircle,
   Upload,
-  Activity
+  Activity,
+  UserCheck,
+  TrendingUp
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,6 +37,13 @@ interface HealthEvent {
   date: string;
   type: 'checkup' | 'wellness' | 'vaccination' | 'training';
   description: string;
+}
+
+interface AttendanceRecord {
+  date: string;
+  status: 'present' | 'absent' | 'late' | 'half-day';
+  checkIn?: string;
+  checkOut?: string;
 }
 
 const WorkerDashboard = () => {
@@ -76,6 +85,28 @@ const WorkerDashboard = () => {
     { id: 3, title: "Safety Training", date: "2024-02-10", type: 'training', description: "Updated mining safety protocols" },
   ]);
 
+  // Attendance Data
+  const [attendanceData] = useState({
+    daily: {
+      today: { date: "2024-02-15", status: 'present' as const, checkIn: "08:00 AM", checkOut: "05:00 PM" },
+      thisWeek: [
+        { date: "2024-02-15", status: 'present' as const, checkIn: "08:00 AM", checkOut: "05:00 PM" },
+        { date: "2024-02-14", status: 'present' as const, checkIn: "08:15 AM", checkOut: "05:00 PM" },
+        { date: "2024-02-13", status: 'late' as const, checkIn: "08:30 AM", checkOut: "05:00 PM" },
+        { date: "2024-02-12", status: 'present' as const, checkIn: "08:00 AM", checkOut: "05:00 PM" },
+        { date: "2024-02-11", status: 'half-day' as const, checkIn: "08:00 AM", checkOut: "01:00 PM" },
+      ]
+    },
+    weekly: {
+      currentWeek: { present: 4, absent: 0, late: 1, halfDays: 1 },
+      lastWeek: { present: 5, absent: 0, late: 0, halfDays: 0 },
+    },
+    monthly: {
+      currentMonth: { present: 18, absent: 1, late: 2, halfDays: 2, totalDays: 23 },
+      lastMonth: { present: 20, absent: 1, late: 1, halfDays: 0, totalDays: 22 },
+    }
+  });
+
   const submitLeaveRequest = () => {
     if (!newLeaveRequest.type || !newLeaveRequest.startDate || !newLeaveRequest.endDate || !newLeaveRequest.reason.trim()) {
       toast.error("Please fill in all fields");
@@ -112,6 +143,16 @@ const WorkerDashboard = () => {
       case 'wellness': return 'bg-success text-success-foreground';
       case 'vaccination': return 'bg-warning text-warning-foreground';
       case 'training': return 'bg-accent text-accent-foreground';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getAttendanceStatusColor = (status: string) => {
+    switch (status) {
+      case 'present': return 'bg-success text-success-foreground';
+      case 'absent': return 'bg-destructive text-destructive-foreground';
+      case 'late': return 'bg-warning text-warning-foreground';
+      case 'half-day': return 'bg-accent text-accent-foreground';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -155,11 +196,161 @@ const WorkerDashboard = () => {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="leave" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="attendance" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="leave">Leave Management</TabsTrigger>
           <TabsTrigger value="health">Health & Wellness</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="attendance" className="space-y-6">
+          {/* Daily Attendance */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <UserCheck className="w-5 h-5 text-primary" />
+                <span>Today's Attendance</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-success" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">Present</p>
+                    <p className="text-sm text-muted-foreground">{attendanceData.daily.today.date}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Check In: {attendanceData.daily.today.checkIn}</p>
+                  <p className="text-sm text-muted-foreground">Check Out: {attendanceData.daily.today.checkOut}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Weekly Attendance */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <CalendarIcon className="w-5 h-5 text-primary" />
+                <span>This Week's Attendance</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div className="p-4 border rounded-lg text-center">
+                  <CheckCircle2 className="w-8 h-8 text-success mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-success">{attendanceData.weekly.currentWeek.present}</p>
+                  <p className="text-sm text-muted-foreground">Present</p>
+                </div>
+                <div className="p-4 border rounded-lg text-center">
+                  <Clock className="w-8 h-8 text-warning mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-warning">{attendanceData.weekly.currentWeek.late}</p>
+                  <p className="text-sm text-muted-foreground">Late</p>
+                </div>
+                <div className="p-4 border rounded-lg text-center">
+                  <Activity className="w-8 h-8 text-accent mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-accent">{attendanceData.weekly.currentWeek.halfDays}</p>
+                  <p className="text-sm text-muted-foreground">Half Days</p>
+                </div>
+                <div className="p-4 border rounded-lg text-center">
+                  <XCircle className="w-8 h-8 text-destructive mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-destructive">{attendanceData.weekly.currentWeek.absent}</p>
+                  <p className="text-sm text-muted-foreground">Absent</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Daily Breakdown</h4>
+                {attendanceData.daily.thisWeek.map((day, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Badge className={getAttendanceStatusColor(day.status)}>
+                        {day.status}
+                      </Badge>
+                      <span className="font-medium">{day.date}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {day.checkIn} - {day.checkOut}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Monthly Attendance */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                <span>Monthly Attendance Summary</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-4">Current Month</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 border rounded-lg">
+                      <span className="text-sm">Total Working Days</span>
+                      <span className="font-bold">{attendanceData.monthly.currentMonth.totalDays}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg bg-success/10">
+                      <span className="text-sm">Present Days</span>
+                      <span className="font-bold text-success">{attendanceData.monthly.currentMonth.present}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg bg-destructive/10">
+                      <span className="text-sm">Absent Days</span>
+                      <span className="font-bold text-destructive">{attendanceData.monthly.currentMonth.absent}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg bg-warning/10">
+                      <span className="text-sm">Late Days</span>
+                      <span className="font-bold text-warning">{attendanceData.monthly.currentMonth.late}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-4 bg-primary/10 rounded-lg">
+                    <p className="text-sm text-muted-foreground">Attendance Rate</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {Math.round((attendanceData.monthly.currentMonth.present / attendanceData.monthly.currentMonth.totalDays) * 100)}%
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-4">Last Month Comparison</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 border rounded-lg">
+                      <span className="text-sm">Total Working Days</span>
+                      <span className="font-bold">{attendanceData.monthly.lastMonth.totalDays}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg">
+                      <span className="text-sm">Present Days</span>
+                      <span className="font-bold">{attendanceData.monthly.lastMonth.present}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg">
+                      <span className="text-sm">Absent Days</span>
+                      <span className="font-bold">{attendanceData.monthly.lastMonth.absent}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded-lg">
+                      <span className="text-sm">Late Days</span>
+                      <span className="font-bold">{attendanceData.monthly.lastMonth.late}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground">Previous Attendance Rate</p>
+                    <p className="text-2xl font-bold">
+                      {Math.round((attendanceData.monthly.lastMonth.present / attendanceData.monthly.lastMonth.totalDays) * 100)}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="leave" className="space-y-6">
           {/* Request Leave Form */}
